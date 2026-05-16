@@ -88,10 +88,10 @@ A web app where a user logs in with their Spotify account, picks an existing pla
 
 ## Learning Context
 
-James has solid CS fundamentals (3rd year CSE) but has never done ML before. When introducing ML concepts:
+I has solid CS fundamentals (3rd year CSE) but has never done ML before. When introducing ML concepts:
 - Explain *what* the code does and *why*, not just how to write it.
 - For boilerplate (auth setup, config), full code is fine.
-- For ML pipeline pieces, encourage James to write the core himself with guidance — he needs to be able to explain this in interviews.
+- For ML pipeline pieces, encourage me to write the core myself with guidance — I needs to be able to explain this in interviews.
 - Flag unfamiliar concepts (embeddings, clustering, loss, etc.) and explain them on first use.
 
 ## Sprint Plan (3 months, 12 weeks)
@@ -114,8 +114,19 @@ James has solid CS fundamentals (3rd year CSE) but has never done ML before. Whe
 
 ## Current Sprint
 
-**Status:** Pre-Week 1 (planning phase)
-**Next:** Detailed Week 1 daily breakdown to be added here once written.
+**Status:** Week 1 complete
+**Next:** Week 2 — Next.js + Auth.js setup, ORM decision, FastAPI deeper work
+
+## Week 1 Retrospective
+
+**What went smoothly:**
+I think I understood all of the topics extremely well and how they work. I understand the concept of embedding and how a vector of numerical values can help a machine to compare two different pieces of data. I also understand how the frontend and backend work with each other. At first, no HTTP calls were allowed, so the two servers were unable to interact with each other (they did not know the other existed). However, after adding CORS middleware on the backend to specifically allow the frontend's origin, the two programs were able to fully interact with each other. 
+
+**What was slow:**
+Understanding CORS middleware and understanding the code behind it took a little bit of time. However, there were no topics covered in week one that I was unable to grasp, and I think that I am going at a good pace. 
+
+**Anything unexpected:**
+Nothing really unexpected so far, I have learned about a few of the topics so far loosely in some of my classes at school (such as embedding and HTTP calls), so everything I have learned so far is going pretty well. 
 
 ## Update Protocol
 
@@ -125,4 +136,4 @@ This file should be updated weekly with:
 - New decisions made
 - Anything Claude Code should know that has changed
 
-If James or Claude Code make a stack/architecture decision mid-project, update the relevant section here so future Claude Code sessions don't suggest reverting it.
+If myself or Claude Code make a stack/architecture decision mid-project, update the relevant section here so future Claude Code sessions don't suggest reverting it.
