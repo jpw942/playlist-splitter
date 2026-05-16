@@ -123,7 +123,7 @@ I has solid CS fundamentals (3rd year CSE) but has never done ML before. When in
 I think I understood all of the topics extremely well and how they work. I understand the concept of embedding and how a vector of numerical values can help a machine to compare two different pieces of data. I also understand how the frontend and backend work with each other. At first, no HTTP calls were allowed, so the two servers were unable to interact with each other (they did not know the other existed). However, after adding CORS middleware on the backend to specifically allow the frontend's origin, the two programs were able to fully interact with each other. 
 
 **What was slow:**
-Understanding CORS middleware and understanding the code behind it took a little bit of time. However, there were no topics covered in week one that I was unable to grasp, and I think that I am going at a good pace. 
+Understanding CORS middleware and understanding the code behind it took a little bit of time. However, there were no topics covered in week one that I was unable to grasp, and I think that I am going at a good pace. Although, I would also like to add that the Jupyter notebook was a little confusing for me, so I may need a refresher on that. 
 
 **Anything unexpected:**
 Nothing really unexpected so far, I have learned about a few of the topics so far loosely in some of my classes at school (such as embedding and HTTP calls), so everything I have learned so far is going pretty well. 
