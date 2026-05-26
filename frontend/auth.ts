@@ -17,9 +17,25 @@ const scopes = [
 // the outgoing token request and corrects the redirect_uri before it reaches Spotify.
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
-  // trustHost: true lets Auth.js read x-forwarded-host (set by our middleware)
+  // trustHost: true lets Auth.js read x-forwarded-host (set by our proxy)
   // so the initial authorization URL uses 127.0.0.1:3000 instead of localhost:3000
   trustHost: true,
+  callbacks: {
+    // Next.js normalises the internal request URL to localhost:3000 even when
+    // the server is bound to 127.0.0.1.  The default redirect callback uses
+    // that localhost origin as `baseUrl`, which makes the post-login redirect
+    // land on localhost:3000 — where the session cookie (set for 127.0.0.1)
+    // is invisible.  We override it to always redirect to the AUTH_URL origin.
+    redirect({ url, baseUrl }) {
+      const correctOrigin = new URL(process.env.AUTH_URL ?? baseUrl).origin;
+      // relative paths → prepend the correct origin
+      if (url.startsWith("/")) return `${correctOrigin}${url}`;
+      // same-origin absolute URLs → allow through
+      if (new URL(url).origin === correctOrigin) return url;
+      // anything else (e.g. external) → fall back to the correct origin
+      return correctOrigin;
+    },
+  },
   providers: [
     Spotify({
       clientId: process.env.AUTH_SPOTIFY_ID,
