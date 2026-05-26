@@ -10,13 +10,25 @@ const scopes = [
   "playlist-modify-public",   // create and edit public playlists
 ].join(" ");
 
+// Note on redirect_uri:
+// Auth.js beta.31 has a bug where it uses "localhost:3000" instead of AUTH_URL
+// when building the redirect_uri for Spotify's token exchange.
+// The fix lives in instrumentation.ts — a global fetch patch that intercepts
+// the outgoing token request and corrects the redirect_uri before it reaches Spotify.
+
 export const { auth, signIn, signOut, handlers } = NextAuth({
+  // trustHost: true lets Auth.js read x-forwarded-host (set by our middleware)
+  // so the initial authorization URL uses 127.0.0.1:3000 instead of localhost:3000
+  trustHost: true,
   providers: [
     Spotify({
       clientId: process.env.AUTH_SPOTIFY_ID,
       clientSecret: process.env.AUTH_SPOTIFY_SECRET,
-      // pass the scopes to Spotify so it knows what permissions to ask the user for
-      authorization: { params: { scope: scopes } },
+      // explicitly set the authorization URL so Auth.js knows where to send the user
+      authorization: {
+        url: "https://accounts.spotify.com/authorize",
+        params: { scope: scopes },
+      },
     }),
   ],
 });

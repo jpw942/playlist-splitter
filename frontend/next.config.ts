@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // allows 127.0.0.1 to connect to the Next.js dev server for hot reload
+  allowedDevOrigins: ["127.0.0.1"],
 };
 
 export default nextConfig;
