@@ -2,14 +2,13 @@
 // hooks can only run in the browser, not on the server.
 "use client";
 
+import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { handleSignIn } from "./actions";
 
 export default function Home() {
-  // useSession returns the current session and a status string.
-  // status is one of: "loading" | "authenticated" | "unauthenticated"
-  // session.user contains name, email, and image from the user's Spotify profile
   const { data: session, status } = useSession();
+  const [playlistCount, setPlaylistCount] = useState<number | null>(null);
 
   // while Auth.js is checking whether the user is logged in, show nothing
   if (status === "loading") {
@@ -36,6 +35,19 @@ export default function Home() {
         {/* display name from Spotify */}
         <p className="text-lg">Welcome, {session.user?.name}</p>
         <p className="text-sm text-gray-500">{session.user?.email}</p>
+        <button
+          onClick={async () => {
+            const res = await fetch("/api/spotify/playlists");
+            const data = await res.json();
+            setPlaylistCount(data.total);
+          }}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          Fetch my playlist count
+        </button>
+        {playlistCount !== null && (
+          <p className="text-lg">You have {playlistCount} playlists.</p>
+        )}
         {/* sign out — redirect to 127.0.0.1:3000 so the next sign-in starts on the
             correct host (PKCE cookies are scoped to the host they were set on) */}
         <button
