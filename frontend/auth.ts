@@ -21,6 +21,25 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
   // so the initial authorization URL uses 127.0.0.1:3000 instead of localhost:3000
   trustHost: true,
   callbacks: {
+    // jwt runs after login and on every request that needs the token.
+    // `account` is only present on the first login — that's our one chance to
+    // grab the Spotify access token and save it into the JWT.
+    jwt({ token, account }) {
+      if (account) {
+        token.spotifyAccessToken = account.access_token;
+      }
+      return token;
+    },
+
+    // session runs when a component calls useSession() or auth().
+    // It takes values from the JWT and puts them on the session object so
+    // our app code can read them. We never put the token directly on the
+    // client — session() is the gatekeeper for what the browser sees.
+    session({ session, token }) {
+      session.spotifyAccessToken = token.spotifyAccessToken as string;
+      return session;
+    },
+
     // Next.js normalises the internal request URL to localhost:3000 even when
     // the server is bound to 127.0.0.1.  The default redirect callback uses
     // that localhost origin as `baseUrl`, which makes the post-login redirect
