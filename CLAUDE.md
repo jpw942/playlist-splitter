@@ -114,8 +114,8 @@ I has solid CS fundamentals (3rd year CSE) but has never done ML before. When in
 
 ## Current Sprint
 
-**Status:** Week 1 complete
-**Next:** Week 2 — Next.js + Auth.js setup, ORM decision, FastAPI deeper work
+**Status:** Week 2 complete
+**Next:** Week 3 — TBD (plan in chat)
 
 ## Week 1 Retrospective
 
@@ -127,6 +127,17 @@ Understanding CORS middleware and understanding the code behind it took a little
 
 **Anything unexpected:**
 Nothing really unexpected so far, I have learned about a few of the topics so far loosely in some of my classes at school (such as embedding and HTTP calls), so everything I have learned so far is going pretty well. 
+
+## Week 2 Retrospective
+
+**What went smoothly:**
+Days 1 through 3 went pretty smoothly overall. Getting the developer credentials from Spotify and putting them into `.env.local` was straightforward, and installing Auth.js and writing `auth.ts` with the Spotify provider and scopes didn't give me much trouble either. Day 3 also went well — wiring up the catch-all route handler that processes the OAuth callback, and wrapping the app in `<SessionProvider>` so `useSession()` works anywhere in the app. Day 6 also went well. Understanding the idea behind keeping the access token server-side — the browser calls our backend, our backend calls Spotify, and the browser only ever gets back the data it asked for — clicked pretty naturally.
+
+**What was slow:**
+Day 4 is where things got tricky. While adding the sign-in button itself went fine, I didn't realize I needed Spotify Premium to use the Web API. This meant that sometimes the Spotify agreement screen wouldn't even appear, and when it did, clicking "Agree" still threw an error. There were also persistent issues with redirect URLs — Spotify's developer dashboard doesn't allow `localhost` as a redirect URI, but Next.js internally normalizes `127.0.0.1` to `localhost`, so after signing in and out I'd end up on `localhost`, which caused the next sign-in attempt to fail. Fixing this required several pieces working together: binding the dev server to `127.0.0.1` with `-H 127.0.0.1`, a `proxy.ts` file that sets the correct host header on all auth requests, using a server action for sign-in (so Auth.js reads `AUTH_URL` directly instead of the normalized URL), and a custom `redirect` callback in `auth.ts` that forces all post-login redirects back to `127.0.0.1`. Day 5 had similar redirect issues, though once those were resolved, reading and displaying the user's profile info (name, email, profile picture) from the session using `useSession()` was fairly straightforward.
+
+**Anything unexpected:**
+The biggest surprise was how many moving parts were involved in keeping `127.0.0.1` consistent end-to-end. It wasn't one bug — it was a chain of four or five places where Next.js or Auth.js would quietly rewrite the URL back to `localhost`, each requiring a separate fix. Also didn't expect that Spotify Premium would be a requirement for the Web API, which caused confusion early on in Day 4.
 
 ## Update Protocol
 
