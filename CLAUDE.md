@@ -88,7 +88,7 @@ A web app where a user logs in with their Spotify account, picks an existing pla
 
 ## Learning Context
 
-I has solid CS fundamentals (3rd year CSE) but has never done ML before. When introducing ML concepts:
+I have solid CS fundamentals (3rd year CSE) but have never done ML before. When introducing ML concepts:
 - Explain *what* the code does and *why*, not just how to write it.
 - For boilerplate (auth setup, config), full code is fine.
 - For ML pipeline pieces, encourage me to write the core myself with guidance — I needs to be able to explain this in interviews.
