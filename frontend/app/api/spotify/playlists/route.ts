@@ -9,7 +9,7 @@ export async function GET() {
   }
 
   const response = await fetch(
-    "https://api.spotify.com/v1/me/playlists?limit=1",
+    "https://api.spotify.com/v1/me/playlists?limit=50",
     {
       headers: {
         Authorization: `Bearer ${session.spotifyAccessToken}`,
@@ -25,5 +25,18 @@ export async function GET() {
   }
 
   const data = await response.json();
-  return NextResponse.json({ total: data.total });
+
+  const playlists = data.items.map((p: {
+    id: string;
+    name: string;
+    images: { url: string }[];
+    tracks: { total: number };
+  }) => ({
+    id: p.id,
+    name: p.name,
+    imageUrl: p.images[0]?.url ?? null,
+    trackCount: p.tracks?.total ?? 0,
+  }));
+
+  return NextResponse.json({ total: data.total, playlists });
 }
