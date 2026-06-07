@@ -48,8 +48,8 @@ export default function Home() {
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-950">
+        <p className="text-gray-500 text-sm">Loading...</p>
       </div>
     );
   }
@@ -59,7 +59,7 @@ export default function Home() {
       <div className="min-h-screen bg-gray-950 text-white">
         {/* top bar */}
         <div className="flex items-center justify-between px-8 py-4 border-b border-gray-800">
-          <h1 className="text-xl font-semibold">Playlist Splitter</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Playlist Splitter</h1>
           <div className="flex items-center gap-3">
             {session.user?.image && (
               <img
@@ -71,7 +71,7 @@ export default function Home() {
             <span className="text-sm text-gray-300">{session.user?.name}</span>
             <button
               onClick={() => signOut({ callbackUrl: "http://127.0.0.1:3000" })}
-              className="text-sm text-gray-400 hover:text-white transition-colors"
+              className="text-sm text-gray-500 hover:text-white transition-colors"
             >
               Sign out
             </button>
@@ -79,34 +79,50 @@ export default function Home() {
         </div>
 
         <div className="px-8 py-6">
-          {/* track list view */}
           {selectedPlaylist ? (
+            /* track list view */
             <>
+              {/* playlist header */}
               <div className="flex items-center gap-4 mb-6">
                 <button
                   onClick={() => setSelectedPlaylist(null)}
-                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                  className="text-sm text-gray-500 hover:text-white transition-colors shrink-0"
                 >
                   ← Back
                 </button>
-                <h2 className="text-lg font-medium">{selectedPlaylist.name}</h2>
+                {selectedPlaylist.imageUrl && (
+                  <img
+                    src={selectedPlaylist.imageUrl}
+                    alt={selectedPlaylist.name}
+                    className="w-12 h-12 rounded object-cover shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold truncate">{selectedPlaylist.name}</h2>
+                  {!tracksLoading && (
+                    <p className="text-xs text-gray-500">{tracks.length} tracks</p>
+                  )}
+                </div>
               </div>
 
               {tracksLoading && (
-                <p className="text-gray-400">Loading tracks...</p>
+                <p className="text-sm text-gray-500">Loading tracks...</p>
               )}
 
               {!tracksLoading && tracks.length === 0 && (
-                <p className="text-gray-400">No tracks found.</p>
+                <p className="text-sm text-gray-500">No tracks found.</p>
               )}
 
               {!tracksLoading && tracks.length > 0 && (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col">
                   {tracks.map((track, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-900 transition-colors"
+                      className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-gray-900 transition-colors group"
                     >
+                      <span className="w-5 text-right text-xs text-gray-600 shrink-0">
+                        {index + 1}
+                      </span>
                       {track.imageUrl ? (
                         <img
                           src={track.imageUrl}
@@ -114,11 +130,13 @@ export default function Home() {
                           className="w-10 h-10 rounded object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded bg-gray-700 shrink-0" />
+                        <div className="w-10 h-10 rounded bg-gray-800 shrink-0" />
                       )}
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">{track.name}</p>
-                        <p className="text-xs text-gray-400 truncate">{track.artist}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {track.artist} · {track.album}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -128,18 +146,23 @@ export default function Home() {
           ) : (
             /* playlist grid view */
             <>
-              <h2 className="text-lg font-medium mb-4">Your Playlists</h2>
+              <div className="flex items-baseline gap-3 mb-5">
+                <h2 className="text-lg font-semibold">Your Playlists</h2>
+                {!playlistsLoading && playlists.length > 0 && (
+                  <span className="text-sm text-gray-500">{playlists.length} playlists</span>
+                )}
+              </div>
 
               {playlistsLoading && (
-                <p className="text-gray-400">Loading playlists...</p>
+                <p className="text-sm text-gray-500">Loading playlists...</p>
               )}
 
               {!playlistsLoading && playlists.length === 0 && (
-                <p className="text-gray-400">No playlists found.</p>
+                <p className="text-sm text-gray-500">No playlists found.</p>
               )}
 
               {!playlistsLoading && playlists.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {playlists.map((playlist) => (
                     <div
                       key={playlist.id}
@@ -153,12 +176,12 @@ export default function Home() {
                           className="w-full aspect-square object-cover rounded-md mb-3"
                         />
                       ) : (
-                        <div className="w-full aspect-square bg-gray-700 rounded-md mb-3 flex items-center justify-center">
-                          <span className="text-gray-500 text-2xl">♪</span>
+                        <div className="w-full aspect-square bg-gray-800 rounded-md mb-3 flex items-center justify-center">
+                          <span className="text-gray-600 text-2xl">♪</span>
                         </div>
                       )}
                       <p className="text-sm font-medium truncate">{playlist.name}</p>
-                      <p className="text-xs text-gray-400 mt-1">{playlist.trackCount} tracks</p>
+                      <p className="text-xs text-gray-500 mt-1">{playlist.trackCount} tracks</p>
                     </div>
                   ))}
                 </div>
@@ -171,12 +194,15 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-gray-950 text-white">
-      <h1 className="text-2xl font-semibold">Playlist Splitter</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950 text-white gap-6">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Playlist Splitter</h1>
+        <p className="text-gray-400 text-sm">Split your Spotify playlists into smart sub-playlists using AI</p>
+      </div>
       <form action={handleSignIn}>
         <button
           type="submit"
-          className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+          className="px-6 py-3 bg-green-500 text-white text-sm font-medium rounded-full hover:bg-green-400 transition-colors"
         >
           Sign in with Spotify
         </button>
