@@ -22,27 +22,44 @@ export default function Home() {
   const { data: session, status } = useSession();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const [playlistsError, setPlaylistsError] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [tracksLoading, setTracksLoading] = useState(false);
+  const [tracksError, setTracksError] = useState(false);
+
+  function loadPlaylists() {
+    setPlaylistsLoading(true);
+    setPlaylistsError(false);
+    fetch("/api/spotify/playlists")
+      .then((res) => {
+        if (res.status === 401) { signOut({ callbackUrl: "http://127.0.0.1:3000" }); return null; }
+        if (!res.ok) throw new Error("Failed to load playlists");
+        return res.json();
+      })
+      .then((data) => { if (data) setPlaylists(data.playlists ?? []); })
+      .catch(() => setPlaylistsError(true))
+      .finally(() => setPlaylistsLoading(false));
+  }
 
   useEffect(() => {
     if (status !== "authenticated") return;
-
-    setPlaylistsLoading(true);
-    fetch("/api/spotify/playlists")
-      .then((res) => res.json())
-      .then((data) => setPlaylists(data.playlists ?? []))
-      .finally(() => setPlaylistsLoading(false));
+    loadPlaylists();
   }, [status]);
 
   function handleSelectPlaylist(playlist: Playlist) {
     setSelectedPlaylist(playlist);
     setTracks([]);
+    setTracksError(false);
     setTracksLoading(true);
     fetch(`/api/spotify/playlists/${playlist.id}/tracks`)
-      .then((res) => res.json())
-      .then((data) => setTracks(data.tracks ?? []))
+      .then((res) => {
+        if (res.status === 401) { signOut({ callbackUrl: "http://127.0.0.1:3000" }); return null; }
+        if (!res.ok) throw new Error("Failed to load tracks");
+        return res.json();
+      })
+      .then((data) => { if (data) setTracks(data.tracks ?? []); })
+      .catch(() => setTracksError(true))
       .finally(() => setTracksLoading(false));
   }
 
@@ -82,7 +99,6 @@ export default function Home() {
           {selectedPlaylist ? (
             /* track list view */
             <>
-              {/* playlist header */}
               <div className="flex items-center gap-4 mb-6">
                 <button
                   onClick={() => setSelectedPlaylist(null)}
@@ -99,26 +115,36 @@ export default function Home() {
                 )}
                 <div className="min-w-0">
                   <h2 className="text-lg font-semibold truncate">{selectedPlaylist.name}</h2>
-                  {!tracksLoading && (
+                  {!tracksLoading && !tracksError && (
                     <p className="text-xs text-gray-500">{tracks.length} tracks</p>
                   )}
                 </div>
               </div>
 
-              {tracksLoading && (
-                <p className="text-sm text-gray-500">Loading tracks...</p>
+              {tracksLoading && <p className="text-sm text-gray-500">Loading tracks...</p>}
+
+              {tracksError && (
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-red-400">Failed to load tracks.</p>
+                  <button
+                    onClick={() => handleSelectPlaylist(selectedPlaylist)}
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
               )}
 
-              {!tracksLoading && tracks.length === 0 && (
+              {!tracksLoading && !tracksError && tracks.length === 0 && (
                 <p className="text-sm text-gray-500">No tracks found.</p>
               )}
 
-              {!tracksLoading && tracks.length > 0 && (
+              {!tracksLoading && !tracksError && tracks.length > 0 && (
                 <div className="flex flex-col">
                   {tracks.map((track, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-gray-900 transition-colors group"
+                      className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-gray-900 transition-colors"
                     >
                       <span className="w-5 text-right text-xs text-gray-600 shrink-0">
                         {index + 1}
@@ -148,20 +174,30 @@ export default function Home() {
             <>
               <div className="flex items-baseline gap-3 mb-5">
                 <h2 className="text-lg font-semibold">Your Playlists</h2>
-                {!playlistsLoading && playlists.length > 0 && (
+                {!playlistsLoading && !playlistsError && playlists.length > 0 && (
                   <span className="text-sm text-gray-500">{playlists.length} playlists</span>
                 )}
               </div>
 
-              {playlistsLoading && (
-                <p className="text-sm text-gray-500">Loading playlists...</p>
+              {playlistsLoading && <p className="text-sm text-gray-500">Loading playlists...</p>}
+
+              {playlistsError && (
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-red-400">Failed to load playlists.</p>
+                  <button
+                    onClick={loadPlaylists}
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
               )}
 
-              {!playlistsLoading && playlists.length === 0 && (
+              {!playlistsLoading && !playlistsError && playlists.length === 0 && (
                 <p className="text-sm text-gray-500">No playlists found.</p>
               )}
 
-              {!playlistsLoading && playlists.length > 0 && (
+              {!playlistsLoading && !playlistsError && playlists.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {playlists.map((playlist) => (
                     <div
