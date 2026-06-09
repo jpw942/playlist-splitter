@@ -114,8 +114,8 @@ I have solid CS fundamentals (3rd year CSE) but have never done ML before. When 
 
 ## Current Sprint
 
-**Status:** Week 2 complete
-**Next:** Week 3 — TBD (plan in chat)
+**Status:** Week 3 complete
+**Next:** Week 4 — TBD (plan in chat)
 
 ## Week 1 Retrospective
 
@@ -138,6 +138,17 @@ Day 4 is where things got tricky. While adding the sign-in button itself went fi
 
 **Anything unexpected:**
 The biggest surprise was how many moving parts were involved in keeping `127.0.0.1` consistent end-to-end. It wasn't one bug — it was a chain of four or five places where Next.js or Auth.js would quietly rewrite the URL back to `localhost`, each requiring a separate fix. Also didn't expect that Spotify Premium would be a requirement for the Web API, which caused confusion early on in Day 4.
+
+## Week 3 Retrospective
+
+**What went smoothly:**
+Day 1 went well. I didn't have much trouble fetching the attributes of each playlist, which included the playlist ID, name, artwork, and track count. I also understood what was going on in the background — the server makes a request to Spotify's API to retrieve this information, which is then passed to the browser and displayed in the UI. Day 2 was also pretty simple, just taking the JSON data from Day 1 and converting it into a more user-friendly layout (improving the UI with a grid of playlist cards). Day 3 was similar to Day 1 in the sense that it produced a JSON response consisting of the tracks in a selected playlist, also using a server-side API call to retrieve this information. Day 4 was just displaying each track using the attributes received in Day 3 (name, artist, album, image). Day 5 polished the UI to make it look more presentable and professional — rounding buttons, adjusting font colors and sizes, adding a track count to the playlist header, and showing album art when viewing a playlist's tracks. Day 6 focused on error handling, making sure that if a Spotify API call fails the UI doesn't silently break. A retry button was added when playlists fail to load, and an error message appears when tracks fail to load. React state was crucial here — we declared `playlistsError` and `tracksError` booleans to track whether we're in an error state and conditionally render the right UI.
+
+**What was slow:**
+The biggest source of friction this week was Spotify's API field naming. Spotify recently renamed several fields to accommodate podcasts alongside regular music — `tracks` became `items` in the playlist list response, the track count moved from `p.tracks.total` to `p.items.total`, the `/tracks` endpoint became `/items`, and the nested track object inside each item changed from `item.track` to `item.item`. None of this is documented clearly, so each one had to be discovered through debugging with console logs. Day 3 also had a 403 error initially because we were calling the old `/tracks` endpoint, which Spotify has restricted for new apps.
+
+**Anything unexpected:**
+The Spotify API renames were the biggest surprise — the same root cause showed up four separate times across different days. Also discovered that some playlists (those containing local files added from a computer) return `item: null` for every track, so they show as empty in the app. This is a Spotify limitation since local files aren't accessible via the API.
 
 ## Update Protocol
 
