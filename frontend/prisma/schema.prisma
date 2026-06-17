@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+model Job {
+  id             String    @id @default(cuid())
+  createdAt      DateTime  @default(now())
+  userId         String
+  playlistId     String
+  playlistName   String
+  status         JobStatus @default(PENDING)
+}
