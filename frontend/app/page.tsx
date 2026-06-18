@@ -27,6 +27,8 @@ export default function Home() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [tracksLoading, setTracksLoading] = useState(false);
   const [tracksError, setTracksError] = useState(false);
+  const [splitLoading, setSplitLoading] = useState(false);
+  const [splitJobId, setSplitJobId] = useState<string | null>(null);
 
   function loadPlaylists() {
     setPlaylistsLoading(true);
@@ -47,11 +49,32 @@ export default function Home() {
     loadPlaylists();
   }, [status]);
 
+  async function handleSplit() {
+    if (!selectedPlaylist) return;
+    setSplitLoading(true);
+    setSplitJobId(null);
+    try {
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playlistId: selectedPlaylist.id, playlistName: selectedPlaylist.name }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setSplitJobId(data.jobId);
+    } catch {
+      // TODO: show error state in a future day
+    } finally {
+      setSplitLoading(false);
+    }
+  }
+
   function handleSelectPlaylist(playlist: Playlist) {
     setSelectedPlaylist(playlist);
     setTracks([]);
     setTracksError(false);
     setTracksLoading(true);
+    setSplitJobId(null);
     fetch(`/api/spotify/playlists/${playlist.id}/tracks`)
       .then((res) => {
         if (res.status === 401) { signOut({ callbackUrl: "http://127.0.0.1:3000" }); return null; }
@@ -120,11 +143,19 @@ export default function Home() {
                   )}
                 </div>
                 <button
-                  className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-full hover:bg-green-400 transition-colors shrink-0"
+                  onClick={handleSplit}
+                  disabled={splitLoading}
+                  className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-full hover:bg-green-400 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Split this playlist
+                  {splitLoading ? "Splitting..." : "Split this playlist"}
                 </button>
               </div>
+
+              {splitJobId && (
+                <p className="text-sm text-green-400 mb-4">
+                  Job created! ID: {splitJobId}
+                </p>
+              )}
 
               {tracksLoading && <p className="text-sm text-gray-500">Loading tracks...</p>}
 

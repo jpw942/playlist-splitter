@@ -37,6 +37,9 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
     // client — session() is the gatekeeper for what the browser sees.
     session({ session, token }) {
       session.spotifyAccessToken = token.spotifyAccessToken as string;
+      if (token.sub && session.user) {
+        session.user.id = token.sub;
+      }
       return session;
     },
 
