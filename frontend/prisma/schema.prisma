@@ -21,4 +21,17 @@ model Job {
   playlistId     String
   playlistName   String
   status         JobStatus @default(PENDING)
+  tracks         Track[]
+}
+
+model Track {
+  id         String   @id @default(cuid())
+  jobId      String
+  job        Job      @relation(fields: [jobId], references: [id])
+  spotifyId  String
+  name       String
+  artist     String
+  previewUrl String?
+  embedding  Json?
+  createdAt  DateTime @default(now())
 }
