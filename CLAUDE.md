@@ -114,8 +114,8 @@ I have solid CS fundamentals (3rd year CSE) but have never done ML before. When 
 
 ## Current Sprint
 
-**Status:** Week 3 complete
-**Next:** Week 4 — TBD (plan in chat)
+**Status:** Week 4 complete
+**Next:** Week 5 — Audio downloads + CLAP embeddings (Month 2 begins)
 
 ## Week 1 Retrospective
 
@@ -149,6 +149,14 @@ The biggest source of friction this week was Spotify's API field naming. Spotify
 
 **Anything unexpected:**
 The Spotify API renames were the biggest surprise — the same root cause showed up four separate times across different days. Also discovered that some playlists (those containing local files added from a computer) return `item: null` for every track, so they show as empty in the app. This is a Spotify limitation since local files aren't accessible via the API.
+
+## Week 4 Retrospective
+
+Adding the Split Playlist button was very simple on Day 1 — it was just adding to the UI with no routes hooked up to it yet. The same goes for the Supabase setup on Day 2; it was mostly just following directions on how to set it up and finding the connection string. Day 3 was also setup work — getting Prisma configured — even though it was a little more difficult to understand what was happening compared to the previous days. Setting up the endpoints on Day 4 also took a bit of time, but eventually I did understand it.
+
+Day 5 was restructuring the FastAPI service and verifying the health endpoint and the `/split` placeholder endpoint were working correctly. This didn't confuse me at all so it went pretty smoothly. Day 6 is where the frontend and backend started working together more closely, and it took me a little longer to understand the full flow of the application. When the Split Playlist button is pressed, a job is created in the database. Then Next.js calls FastAPI, and if FastAPI responds successfully the job status updates to `PROCESSING`.
+
+Overall this week wasn't too confusing — just required a little explanation here and there to understand what was happening under the hood.
 
 ## Update Protocol
 
