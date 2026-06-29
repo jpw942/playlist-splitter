@@ -23,7 +23,11 @@ export async function POST(request: NextRequest) {
   const splitRes = await fetch(`${fastapiUrl}/split`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ playlist_id: playlistId, job_id: job.id }),
+    body: JSON.stringify({
+      playlist_id: playlistId,
+      job_id: job.id,
+      spotify_access_token: session.spotifyAccessToken,
+    }),
   });
 
   if (splitRes.ok) {
