@@ -72,12 +72,18 @@ We use the model from Hugging Face: `laion/clap-htsat-unfused`.
 
 **Branch:** `feature/download-audio`
 
-1. For each track in the database (for this job) that has a `previewUrl`, download the 30-second MP3 to a temp directory (`/tmp/audio/{job_id}/{track_id}.mp3`).
-2. Use Python's `httpx` (already installed) to download the files.
-3. Write a helper function `download_previews(job_id, tracks)` in a new file `backend/app/audio.py`.
-4. Call this from the `/split` endpoint after saving tracks to the database.
-5. **Concept:** We're downloading the audio locally because CLAP needs to read the audio data from a file. In production you'd use cloud storage, but for now local temp files are fine.
-6. Commit, PR, merge, cleanup.
+**Note:** Spotify's `preview_url` field is now null for virtually all tracks, so we use `yt-dlp` to search YouTube by "Artist - Track Name" and download 30 seconds of audio instead. The rest of the pipeline (CLAP, HDBSCAN) is unchanged.
+
+1. Install `ffmpeg` if not already installed: `brew install ffmpeg` (required by yt-dlp to extract audio).
+2. Install `yt-dlp` in the backend: `uv add yt-dlp`.
+3. Update `_save_tracks` in `main.py` to save all tracks (remove the `preview_url` filter — yt-dlp handles all tracks regardless of whether Spotify provided a preview URL).
+4. Write a helper function `download_previews(job_id, tracks)` in a new file `backend/app/audio.py` that:
+   - For each track, searches YouTube with `ytsearch1:{artist} - {name} audio`
+   - Downloads and extracts 30 seconds of audio as MP3 to `/tmp/audio/{job_id}/{spotify_id}.mp3`
+   - Skips any tracks that fail (logs the error and moves on)
+5. Call `download_previews` from the `/split` endpoint after saving tracks to the database.
+6. **Concept:** We're downloading audio locally because CLAP needs to read audio data from a file. yt-dlp searches YouTube, finds the best audio-only stream, and ffmpeg trims it to 30 seconds. In production you'd use cloud storage, but local temp files are fine for now.
+7. Commit, PR, merge, cleanup.
 
 ---
 
@@ -136,7 +142,7 @@ We use the model from Hugging Face: `laion/clap-htsat-unfused`.
 
 ## If You Get Stuck
 
-- Spotify API returns `preview_url: null` for most tracks → this is normal. If a whole playlist has no previews, try a different playlist.
+- Spotify `preview_url` is null for virtually all tracks → this is why we use yt-dlp instead. The `previewUrl` column in the DB will stay null and that's fine.
 - CLAP model download is slow the first time → Hugging Face caches it locally after the first download (~1GB).
 - `librosa` audio loading errors → make sure `ffmpeg` is installed on your machine (`brew install ffmpeg`).
 - psycopg2 connection issues → same session pooler URL fix as before.

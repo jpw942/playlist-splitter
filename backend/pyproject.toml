@@ -7,4 +7,5 @@ requires-python = ">=3.9"
 dependencies = [
     "psycopg2-binary>=2.9.12",
     "python-dotenv>=1.2.1",
+    "yt-dlp>=2025.10.14",
 ]

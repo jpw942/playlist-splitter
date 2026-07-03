@@ -3,9 +3,10 @@ import os
 import httpx
 import psycopg2
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .audio import download_previews
 from .models import SplitRequest, SplitResponse
 
 load_dotenv()
@@ -26,12 +27,15 @@ def health():
 
 
 @app.post("/split", response_model=SplitResponse)
-def split(body: SplitRequest):
-    tracks = _fetch_spotify_tracks(body.playlist_id, body.spotify_access_token)
-    with_preview = [t for t in tracks if t["preview_url"]]
-    print(f"Fetched {len(tracks)} tracks, {len(with_preview)} have a preview URL")
-    _save_tracks(body.job_id, tracks)
+def split(body: SplitRequest, background_tasks: BackgroundTasks):
+    background_tasks.add_task(_process_split, body.job_id, body.playlist_id, body.spotify_access_token)
     return SplitResponse(message="received", job_id=body.job_id)
+
+
+def _process_split(job_id: str, playlist_id: str, access_token: str):
+    tracks = _fetch_spotify_tracks(playlist_id, access_token)
+    _save_tracks(job_id, tracks)
+    download_previews(job_id, tracks)
 
 
 def _fetch_spotify_tracks(playlist_id: str, access_token: str) -> list[dict]:
@@ -63,14 +67,12 @@ def _fetch_spotify_tracks(playlist_id: str, access_token: str) -> list[dict]:
 
 
 def _save_tracks(job_id: str, tracks: list[dict]):
-    """Insert Track rows into the database for tracks that have a preview URL."""
+    """Insert a Track row for every track in the playlist."""
     database_url = os.environ["DATABASE_URL"]
     conn = psycopg2.connect(database_url)
     try:
         with conn.cursor() as cur:
             for track in tracks:
-                if not track["preview_url"]:
-                    continue
                 cur.execute(
                     """
                     INSERT INTO "Track" ("id", "jobId", "spotifyId", "name", "artist", "previewUrl", "createdAt")
