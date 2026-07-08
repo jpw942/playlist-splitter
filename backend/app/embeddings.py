@@ -1,6 +1,13 @@
+import json
+import os
+
 import librosa
+import psycopg2
 import torch
+from dotenv import load_dotenv
 from transformers import ClapModel, ClapProcessor
+
+load_dotenv()
 
 # Load the model and processor once at import time — loading is slow (~1GB download
 # on first run), so we don't want to do it inside the function on every call.
@@ -33,3 +40,36 @@ def embed_audio(file_path: str) -> list[float]:
     # Step 4: Return the embedding as a plain Python list of floats.
     # Hint: tensor[0].tolist() converts the first (only) row to a list.
     return audio_features[0].tolist()
+
+
+def embed_all_tracks(job_id: str, tracks: list[dict]) -> None:
+    """Run embed_audio on every downloaded file and store the result in the DB."""
+    audio_dir = f"/tmp/audio/{job_id}"
+    database_url = os.environ["DATABASE_URL"]
+    conn = psycopg2.connect(database_url)
+
+    try:
+        with conn.cursor() as cur:
+            for track in tracks:
+                file_path = f"{audio_dir}/{track['spotify_id']}.mp3"
+                if not os.path.exists(file_path):
+                    print(f"No audio file for: {track['name']} — skipping")
+                    continue
+
+                try:
+                    embedding = embed_audio(file_path)
+                    cur.execute(
+                        """
+                        UPDATE "Track"
+                        SET embedding = %s
+                        WHERE "jobId" = %s AND "spotifyId" = %s
+                        """,
+                        (json.dumps(embedding), job_id, track["spotify_id"]),
+                    )
+                    print(f"Embedded: {track['artist']} - {track['name']}")
+                except Exception as e:
+                    print(f"Failed to embed {track['name']}: {e}")
+
+        conn.commit()
+    finally:
+        conn.close()
