@@ -72,18 +72,16 @@ We use the model from Hugging Face: `laion/clap-htsat-unfused`.
 
 **Branch:** `feature/download-audio`
 
-**Note:** Spotify's `preview_url` field is now null for virtually all tracks, so we use `yt-dlp` to search YouTube by "Artist - Track Name" and download 30 seconds of audio instead. The rest of the pipeline (CLAP, HDBSCAN) is unchanged.
+**Note:** Spotify's `preview_url` field is now null for virtually all tracks, and YouTube blocked yt-dlp downloads with 403 errors. We use the **Deezer public API** instead — it returns 30-second preview MP3s with no API key required. The rest of the pipeline (CLAP, HDBSCAN) is unchanged.
 
-1. Install `ffmpeg` if not already installed: `brew install ffmpeg` (required by yt-dlp to extract audio).
-2. Install `yt-dlp` in the backend: `uv add yt-dlp`.
-3. Update `_save_tracks` in `main.py` to save all tracks (remove the `preview_url` filter — yt-dlp handles all tracks regardless of whether Spotify provided a preview URL).
-4. Write a helper function `download_previews(job_id, tracks)` in a new file `backend/app/audio.py` that:
-   - For each track, searches YouTube with `ytsearch1:{artist} - {name} audio`
-   - Downloads and extracts 30 seconds of audio as MP3 to `/tmp/audio/{job_id}/{spotify_id}.mp3`
-   - Skips any tracks that fail (logs the error and moves on)
-5. Call `download_previews` from the `/split` endpoint after saving tracks to the database.
-6. **Concept:** We're downloading audio locally because CLAP needs to read audio data from a file. yt-dlp searches YouTube, finds the best audio-only stream, and ffmpeg trims it to 30 seconds. In production you'd use cloud storage, but local temp files are fine for now.
-7. Commit, PR, merge, cleanup.
+1. Update `_save_tracks` in `main.py` to save all tracks (remove the `preview_url` filter).
+2. Write a helper function `download_previews(job_id, tracks)` in a new file `backend/app/audio.py` that:
+   - For each track, searches Deezer at `https://api.deezer.com/search?q={artist} {name}&limit=1`
+   - Downloads the `preview` URL (a direct 30-second MP3) to `/tmp/audio/{job_id}/{spotify_id}.mp3` using `httpx`
+   - Skips any tracks not found on Deezer or without a preview (logs and moves on)
+3. Call `download_previews` from the `/split` endpoint after saving tracks to the database.
+4. **Concept:** We're downloading audio locally because CLAP needs to read audio data from a file. Deezer's public API provides direct MP3 preview URLs — no scraping, no auth needed. In production you'd use cloud storage, but local temp files are fine for now.
+5. Commit, PR, merge, cleanup.
 
 ---
 

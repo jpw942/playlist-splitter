@@ -114,8 +114,8 @@ I have solid CS fundamentals (3rd year CSE) but have never done ML before. When 
 
 ## Current Sprint
 
-**Status:** Week 4 complete
-**Next:** Week 5 — Audio downloads + CLAP embeddings (Month 2 begins)
+**Status:** Week 5 complete
+**Next:** Week 6 — HDBSCAN clustering + parameter tuning
 
 ## Week 1 Retrospective
 
@@ -157,6 +157,20 @@ Adding the Split Playlist button was very simple on Day 1 — it was just adding
 Day 5 was restructuring the FastAPI service and verifying the health endpoint and the `/split` placeholder endpoint were working correctly. This didn't confuse me at all so it went pretty smoothly. Day 6 is where the frontend and backend started working together more closely, and it took me a little longer to understand the full flow of the application. When the Split Playlist button is pressed, a job is created in the database. Then Next.js calls FastAPI, and if FastAPI responds successfully the job status updates to `PROCESSING`.
 
 Overall this week wasn't too confusing — just required a little explanation here and there to understand what was happening under the hood.
+
+## Week 5 Retrospective
+
+**What went smoothly:**
+The CLAP model went really well. I had no issues getting an embedding for each song in the selected playlist, and creating a function that looped through the playlist so we could access each song. I also understood what was happening with this part of the project pretty well. Additionally, thanks to an AI class I took last semester, I understand the embedded values pretty well and what they represent.
+
+**What was slow:**
+Something that did not go smoothly was the audio previews. The original plan was to use Spotify's audio previews, however Spotify has recently removed these for most tracks. We then tried downloading audio from YouTube via yt-dlp, but YouTube blocked all download attempts with 403 errors. We ultimately switched to the Deezer public API, which provides 30-second audio previews and required no API key — this ended up being the cleanest solution.
+
+**Anything unexpected:**
+Both Spotify preview URLs and YouTube downloads being unavailable was a significant surprise that required two pivots before landing on Deezer. Also encountered a Turbopack route-loading bug in Next.js that required deleting the `.next` cache to fix auth on Day 6.
+
+**Architecture decision:**
+Audio previews are now sourced from Deezer's public API instead of Spotify. The `previewUrl` column in the `Track` table remains in the schema but stays null — Deezer audio is downloaded directly to `/tmp/audio/{job_id}/{spotifyId}.mp3` without storing the URL.
 
 ## Update Protocol
 
