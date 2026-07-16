@@ -33,5 +33,6 @@ model Track {
   artist     String
   previewUrl String?
   embedding  Json?
+  clusterId  Int?
   createdAt  DateTime @default(now())
 }
