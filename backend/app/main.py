@@ -7,6 +7,7 @@ from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .audio import download_previews
+from .clustering import run_clustering
 from .embeddings import embed_all_tracks
 from .models import SplitRequest, SplitResponse
 
@@ -38,6 +39,7 @@ def _process_split(job_id: str, playlist_id: str, access_token: str):
     _save_tracks(job_id, tracks)
     download_previews(job_id, tracks)
     embed_all_tracks(job_id, tracks)
+    run_clustering(job_id)
 
 
 def _fetch_spotify_tracks(playlist_id: str, access_token: str) -> list[dict]:

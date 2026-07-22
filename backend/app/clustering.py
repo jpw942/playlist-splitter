@@ -44,3 +44,27 @@ def cluster_tracks(job_id: str) -> dict:
     print(f"Found {n_clusters} clusters, {n_noise} noise tracks")
 
     return dict(zip(track_ids, labels.tolist()))
+
+
+def save_cluster_labels(labels: dict) -> None:
+    """Write cluster labels back to the Track table."""
+    if not labels:
+        return
+
+    database_url = os.environ["DATABASE_URL"]
+    conn = psycopg2.connect(database_url)
+    try:
+        with conn.cursor() as cur:
+            for track_id, cluster_id in labels.items():
+                cur.execute(
+                    'UPDATE "Track" SET "clusterId" = %s WHERE id = %s',
+                    (cluster_id, track_id),
+                )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def run_clustering(job_id: str) -> None:
+    labels = cluster_tracks(job_id)
+    save_cluster_labels(labels)
