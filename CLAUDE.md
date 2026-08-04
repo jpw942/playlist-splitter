@@ -114,8 +114,8 @@ I have solid CS fundamentals (3rd year CSE) but have never done ML before. When 
 
 ## Current Sprint
 
-**Status:** Week 5 complete
-**Next:** Week 6 — HDBSCAN clustering + parameter tuning
+**Status:** Week 6 complete
+**Next:** Week 7 — LLM cluster naming + write sub-playlists back to Spotify
 
 ## Week 1 Retrospective
 
@@ -171,6 +171,14 @@ Both Spotify preview URLs and YouTube downloads being unavailable was a signific
 
 **Architecture decision:**
 Audio previews are now sourced from Deezer's public API instead of Spotify. The `previewUrl` column in the `Track` table remains in the schema but stays null — Deezer audio is downloaded directly to `/tmp/audio/{job_id}/{spotifyId}.mp3` without storing the URL.
+
+## Week 6 Retrospective
+
+Day 1 went really smooth and was easy enough — just adding a `clusterId` column to the Track table to hold an integer representing each track's assigned cluster. Days 2 and 3 were a little tougher and required more help writing the code, however I understood what was going on and why it was important. The code was essentially mapping each track ID to its cluster number and saving that to the database. It did this by loading the embeddings and running HDBSCAN on them, then a `save_cluster_labels` function repeatedly saved the assigned cluster for each track back to the database.
+
+Day 4 was interesting because I got to see the effect of adjusting the HDBSCAN parameters. `min_cluster_size` controls the minimum number of tracks required to form a cluster — when it's lower, the algorithm can be more precise, but with playlists of varying sizes it might not be smart to allow clusters with only a couple of songs. When `min_cluster_size` is too high, it can group songs that aren't meant to be together. We settled on 3 as a reasonable default. Day 5 was essentially error handling for edge cases — noise tracks (those not assigned to any cluster) will be left in the database for now and dealt with in Week 7 when we build the Spotify write-back. Cases where the playlist is too short or no tracks have embeddings are also handled gracefully.
+
+Overall this week wasn't too difficult to understand, and this is probably the part of the project I find most interesting since it's getting into the AI side of things.
 
 ## Update Protocol
 
