@@ -35,13 +35,21 @@ def cluster_tracks(job_id: str) -> dict:
     track_ids = [row[0] for row in rows]
     matrix = np.array([json.loads(row[1]) if isinstance(row[1], str) else row[1] for row in rows])
 
+    min_cluster_size = 3
+    if len(track_ids) < min_cluster_size:
+        print(f"Too few tracks to cluster ({len(track_ids)}) — skipping clustering")
+        return {}
+
     print(f"Clustering {len(track_ids)} tracks...")
-    clusterer = hdbscan.HDBSCAN(min_cluster_size=3, min_samples=1)
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, min_samples=1)
     labels = clusterer.fit_predict(matrix)
 
     n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
     n_noise = list(labels).count(-1)
     print(f"Found {n_clusters} clusters, {n_noise} noise tracks")
+
+    if n_clusters == 0:
+        print("Warning: all tracks marked as noise — try a larger or more varied playlist")
 
     return dict(zip(track_ids, labels.tolist()))
 
