@@ -22,6 +22,7 @@ model Job {
   playlistName   String
   status         JobStatus @default(PENDING)
   tracks         Track[]
+  clusters       Cluster[]
 }
 
 model Track {
@@ -35,4 +36,14 @@ model Track {
   embedding  Json?
   clusterId  Int?
   createdAt  DateTime @default(now())
+}
+
+model Cluster {
+  id                String   @id @default(cuid())
+  jobId             String
+  job               Job      @relation(fields: [jobId], references: [id])
+  clusterNumber     Int
+  name              String?
+  spotifyPlaylistId String?
+  createdAt         DateTime @default(now())
 }
