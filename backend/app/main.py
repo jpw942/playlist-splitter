@@ -10,6 +10,7 @@ from .audio import download_previews
 from .clustering import run_clustering
 from .embeddings import embed_all_tracks
 from .models import SplitRequest, SplitResponse
+from .naming import name_all_clusters, save_cluster_names
 
 load_dotenv()
 
@@ -40,6 +41,8 @@ def _process_split(job_id: str, playlist_id: str, access_token: str):
     download_previews(job_id, tracks)
     embed_all_tracks(job_id, tracks)
     run_clustering(job_id)
+    cluster_names = name_all_clusters(job_id, tracks)
+    save_cluster_names(job_id, cluster_names)
 
 
 def _fetch_spotify_tracks(playlist_id: str, access_token: str) -> list[dict]:
