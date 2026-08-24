@@ -11,6 +11,7 @@ from .clustering import run_clustering
 from .embeddings import embed_all_tracks
 from .models import SplitRequest, SplitResponse
 from .naming import name_all_clusters, save_cluster_names
+from .spotify import create_cluster_playlists
 
 load_dotenv()
 
@@ -43,6 +44,7 @@ def _process_split(job_id: str, playlist_id: str, access_token: str):
     run_clustering(job_id)
     cluster_names = name_all_clusters(job_id, tracks)
     save_cluster_names(job_id, cluster_names)
+    create_cluster_playlists(job_id, access_token)
 
 
 def _fetch_spotify_tracks(playlist_id: str, access_token: str) -> list[dict]:
