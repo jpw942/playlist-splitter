@@ -41,8 +41,10 @@ def name_all_clusters(job_id: str, tracks: list[dict]) -> dict:
 
     track_map = {t["spotify_id"]: t for t in tracks}
     clusters: dict[int, list[dict]] = {}
+    noise_count = 0
     for row_id, spotify_id, cluster_id in rows:
         if cluster_id == -1:
+            noise_count += 1
             continue
         track = track_map.get(spotify_id, {"name": spotify_id, "artist": ""})
         clusters.setdefault(cluster_id, []).append(track)
@@ -52,6 +54,10 @@ def name_all_clusters(job_id: str, tracks: list[dict]) -> dict:
         print(f"Naming cluster {cluster_number} ({len(cluster_tracks)} tracks)...")
         cluster_names[cluster_number] = name_cluster(cluster_tracks)
         print(f"  → {cluster_names[cluster_number]}")
+
+    if noise_count > 0:
+        print(f"Found {noise_count} noise tracks → 'Miscellaneous'")
+        cluster_names[-1] = "Miscellaneous"
 
     return cluster_names
 
