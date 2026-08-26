@@ -14,8 +14,8 @@ def name_cluster(tracks: list[dict]) -> str:
     track_list = "\n".join(f'- "{t["name"]}" by {t["artist"]}' for t in tracks)
     prompt = (
         f"Here are the songs in a Spotify playlist cluster:\n{track_list}\n\n"
-        "Give this cluster a short, creative playlist name (2–5 words) that captures the vibe. "
-        "Respond with only the name, no explanation, no quotes."
+        "Identify the genre or type of music these songs share (e.g. Country, Hip-Hop, Indie Pop, R&B). "
+        "Respond with only the genre or music type, 1–3 words, no explanation, no quotes."
     )
     message = _client.messages.create(
         model="claude-haiku-4-5-20251001",
