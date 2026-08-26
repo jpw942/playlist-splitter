@@ -8,7 +8,7 @@ load_dotenv()
 
 
 def create_cluster_playlists(job_id: str, access_token: str) -> None:
-    headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {access_token}"}
 
     with httpx.Client() as client:
         user_id = _get_user_id(client, headers)
@@ -20,6 +20,7 @@ def create_cluster_playlists(job_id: str, access_token: str) -> None:
                 continue
 
             playlist_id = _create_playlist(client, headers, user_id, cluster_name)
+            print(f"Created playlist ID: {playlist_id}")
             _add_tracks(client, headers, playlist_id, track_uris)
             _save_playlist_id(cluster_db_id, playlist_id)
             print(f"Created playlist '{cluster_name}' with {len(track_uris)} tracks")
@@ -64,11 +65,13 @@ def _fetch_track_uris(job_id: str, cluster_number: int) -> list[str]:
 
 def _create_playlist(client: httpx.Client, headers: dict, user_id: str, name: str) -> str:
     res = client.post(
-        f"https://api.spotify.com/v1/users/{user_id}/playlists",
+        "https://api.spotify.com/v1/me/playlists",
         headers=headers,
         json={"name": name, "public": False, "description": "Created by Playlist Splitter"},
     )
-    res.raise_for_status()
+    if not res.is_success:
+        print(f"Spotify error {res.status_code}: {res.text}")
+        res.raise_for_status()
     return res.json()["id"]
 
 
@@ -76,11 +79,13 @@ def _add_tracks(client: httpx.Client, headers: dict, playlist_id: str, uris: lis
     for i in range(0, len(uris), 100):
         batch = uris[i:i + 100]
         res = client.post(
-            f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks",
+            f"https://api.spotify.com/v1/playlists/{playlist_id}/items",
             headers=headers,
             json={"uris": batch},
         )
-        res.raise_for_status()
+        if not res.is_success:
+            print(f"Add tracks error {res.status_code}: {res.text}")
+            res.raise_for_status()
 
 
 def _save_playlist_id(cluster_db_id: str, playlist_id: str) -> None:

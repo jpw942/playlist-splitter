@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 type SpotifyPlaylistItem = {
   id: string;
   name: string;
-  images: { url: string }[];
+  images: { url: string }[] | null;
   items: { total: number } | null;
 };
 
@@ -40,7 +40,7 @@ export async function GET() {
   const playlists = allItems.map((p) => ({
     id: p.id,
     name: p.name,
-    imageUrl: p.images[0]?.url ?? null,
+    imageUrl: p.images?.[0]?.url ?? null,
     trackCount: p.items?.total ?? 0,
   }));
 
