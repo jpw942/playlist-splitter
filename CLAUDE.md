@@ -114,8 +114,8 @@ I have solid CS fundamentals (3rd year CSE) but have never done ML before. When 
 
 ## Current Sprint
 
-**Status:** Week 6 complete
-**Next:** Week 7 — LLM cluster naming + write sub-playlists back to Spotify
+**Status:** Week 7 complete
+**Next:** Week 8 — UI/UX polish, error handling, loading states
 
 ## Week 1 Retrospective
 
@@ -179,6 +179,12 @@ Day 1 went really smooth and was easy enough — just adding a `clusterId` colum
 Day 4 was interesting because I got to see the effect of adjusting the HDBSCAN parameters. `min_cluster_size` controls the minimum number of tracks required to form a cluster — when it's lower, the algorithm can be more precise, but with playlists of varying sizes it might not be smart to allow clusters with only a couple of songs. When `min_cluster_size` is too high, it can group songs that aren't meant to be together. We settled on 3 as a reasonable default. Day 5 was essentially error handling for edge cases — noise tracks (those not assigned to any cluster) will be left in the database for now and dealt with in Week 7 when we build the Spotify write-back. Cases where the playlist is too short or no tracks have embeddings are also handled gracefully.
 
 Overall this week wasn't too difficult to understand, and this is probably the part of the project I find most interesting since it's getting into the AI side of things.
+
+## Week 7 Retrospective
+
+This week mostly went well without major issues. Adding the `Cluster` table to the Prisma schema was straightforward, and naming each cluster using the Claude API prompt worked cleanly. Identifying noise tracks (those HDBSCAN assigned to cluster -1) and routing them into their own "Miscellaneous" playlist also went smoothly.
+
+The end-to-end test in Day 6 is where problems started. Every time I split a playlist, the new sub-playlists would appear in Spotify but no tracks would be added — the app was creating empty playlists. Debugging this was tough: the token was valid, scopes looked correct, and even renaming a playlist worked fine. Eventually the root cause turned out to be a Spotify API policy change from 2023/2024: `POST /v1/playlists/{id}/tracks` is deprecated for new apps and always returns 403 with no useful error message. The fix was switching to `POST /v1/playlists/{id}/items`, which is the current endpoint. One line change, but it took significant debugging to find.
 
 ## Update Protocol
 
