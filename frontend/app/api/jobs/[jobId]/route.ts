@@ -4,15 +4,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
+  const { jobId } = await params;
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const job = await prisma.job.findUnique({
-    where: { id: params.jobId },
+    where: { id: jobId },
     include: {
       clusters: {
         select: {

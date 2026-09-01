@@ -18,6 +18,12 @@ type Track = {
   imageUrl: string | null;
 };
 
+type Cluster = {
+  name: string | null;
+  spotifyPlaylistId: string | null;
+  clusterNumber: number;
+};
+
 export default function Home() {
   const { data: session, status } = useSession();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -29,6 +35,8 @@ export default function Home() {
   const [tracksError, setTracksError] = useState(false);
   const [splitLoading, setSplitLoading] = useState(false);
   const [splitJobId, setSplitJobId] = useState<string | null>(null);
+  const [jobStatus, setJobStatus] = useState<"idle" | "processing" | "done" | "failed">("idle");
+  const [clusters, setClusters] = useState<Cluster[]>([]);
 
   function loadPlaylists() {
     setPlaylistsLoading(true);
@@ -53,6 +61,8 @@ export default function Home() {
     if (!selectedPlaylist) return;
     setSplitLoading(true);
     setSplitJobId(null);
+    setJobStatus("idle");
+    setClusters([]);
     try {
       const res = await fetch("/api/jobs", {
         method: "POST",
@@ -62,12 +72,34 @@ export default function Home() {
       if (!res.ok) throw new Error();
       const data = await res.json();
       setSplitJobId(data.jobId);
+      setJobStatus("processing");
     } catch {
-      // TODO: show error state in a future day
+      setJobStatus("failed");
     } finally {
       setSplitLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (!splitJobId || jobStatus !== "processing") return;
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/jobs/${splitJobId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status === "DONE") {
+          setJobStatus("done");
+          setClusters(data.clusters ?? []);
+        } else if (data.status === "FAILED") {
+          setJobStatus("failed");
+        }
+      } catch {
+        // network error — keep polling
+      }
+    };
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
+  }, [splitJobId, jobStatus]);
 
   function handleSelectPlaylist(playlist: Playlist) {
     setSelectedPlaylist(playlist);
@@ -151,10 +183,20 @@ export default function Home() {
                 </button>
               </div>
 
-              {splitJobId && (
-                <p className="text-sm text-green-400 mb-4">
-                  Job created! ID: {splitJobId}
-                </p>
+              {jobStatus === "processing" && (
+                <div className="flex items-center gap-2 mb-4 text-sm text-gray-400">
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  <span>Analyzing your playlist…</span>
+                </div>
+              )}
+              {jobStatus === "done" && (
+                <p className="text-sm text-green-400 mb-4">Done! Check Spotify for your new playlists.</p>
+              )}
+              {jobStatus === "failed" && (
+                <p className="text-sm text-red-400 mb-4">Something went wrong. Please try again.</p>
               )}
 
               {tracksLoading && <p className="text-sm text-gray-500">Loading tracks...</p>}
