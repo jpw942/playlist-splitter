@@ -221,6 +221,7 @@ export default function Home() {
                       setSplitJobId(null);
                       setJobStatus("idle");
                       setClusters([]);
+                      loadPlaylists();
                     }}
                     className="text-sm text-gray-500 hover:text-white transition-colors"
                   >
