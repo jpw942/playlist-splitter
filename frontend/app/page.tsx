@@ -193,7 +193,40 @@ export default function Home() {
                 </div>
               )}
               {jobStatus === "done" && (
-                <p className="text-sm text-green-400 mb-4">Done! Check Spotify for your new playlists.</p>
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-300 mb-3">Your new playlists</h3>
+                  <div className="flex flex-col gap-2 mb-4">
+                    {clusters.map((cluster) => (
+                      <div
+                        key={cluster.clusterNumber}
+                        className="flex items-center justify-between px-4 py-3 bg-gray-900 rounded-lg"
+                      >
+                        <span className="text-sm font-medium">{cluster.name ?? "Unnamed"}</span>
+                        {cluster.spotifyPlaylistId && (
+                          <a
+                            href={`https://open.spotify.com/playlist/${cluster.spotifyPlaylistId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-green-400 hover:text-green-300 transition-colors"
+                          >
+                            Open in Spotify →
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedPlaylist(null);
+                      setSplitJobId(null);
+                      setJobStatus("idle");
+                      setClusters([]);
+                    }}
+                    className="text-sm text-gray-500 hover:text-white transition-colors"
+                  >
+                    ← Split another playlist
+                  </button>
+                </div>
               )}
               {jobStatus === "failed" && (
                 <p className="text-sm text-red-400 mb-4">Something went wrong. Please try again.</p>
