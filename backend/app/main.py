@@ -37,14 +37,18 @@ def split(body: SplitRequest, background_tasks: BackgroundTasks):
 
 
 def _process_split(job_id: str, playlist_id: str, access_token: str):
-    tracks = _fetch_spotify_tracks(playlist_id, access_token)
-    _save_tracks(job_id, tracks)
-    download_previews(job_id, tracks)
-    embed_all_tracks(job_id, tracks)
-    run_clustering(job_id)
-    cluster_names = name_all_clusters(job_id, tracks)
-    save_cluster_names(job_id, cluster_names)
-    create_cluster_playlists(job_id, access_token)
+    try:
+        tracks = _fetch_spotify_tracks(playlist_id, access_token)
+        _save_tracks(job_id, tracks)
+        download_previews(job_id, tracks)
+        embed_all_tracks(job_id, tracks)
+        run_clustering(job_id)
+        cluster_names = name_all_clusters(job_id, tracks)
+        save_cluster_names(job_id, cluster_names)
+        create_cluster_playlists(job_id, access_token)
+    except Exception as e:
+        print(f"Pipeline failed for job {job_id}: {e}")
+        _mark_job_failed(job_id)
 
 
 def _fetch_spotify_tracks(playlist_id: str, access_token: str) -> list[dict]:
@@ -73,6 +77,17 @@ def _fetch_spotify_tracks(playlist_id: str, access_token: str) -> list[dict]:
         url = data.get("next")
 
     return tracks
+
+
+def _mark_job_failed(job_id: str):
+    database_url = os.environ["DATABASE_URL"]
+    conn = psycopg2.connect(database_url)
+    try:
+        with conn.cursor() as cur:
+            cur.execute('UPDATE "Job" SET status = \'FAILED\' WHERE id = %s', (job_id,))
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def _save_tracks(job_id: str, tracks: list[dict]):
