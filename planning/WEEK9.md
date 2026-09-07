@@ -1,23 +1,8 @@
-# Week 9 — Deploy Everything
+# Week 9 — Deploy Frontend + Polish
 
-**Theme:** The app works locally. This week makes it live on the real internet — frontend on Vercel, ML backend on Render, connected to a custom domain — so anyone you give the link to can use it.
+**Theme:** Get the app live on the real internet. The ML backend runs locally only — deploying it proved too complex and expensive for a portfolio project. Instead, the frontend goes to Vercel (free), and the full split flow is documented with a screen recording and README for anyone viewing the GitHub repo.
 
-By end of this week, you should be able to share a URL with someone, have them log in with their Spotify account, split a playlist, and see results. No local server required.
-
-## Background: What Needs to Change for Production
-
-The app currently runs entirely on your laptop. Several things are hardcoded to local addresses that need to become real URLs:
-
-- `AUTH_URL` in Vercel env vars → production domain (e.g. `https://playlistsplitter.com`)
-- `FASTAPI_URL` in Vercel env vars → Render backend URL
-- `allow_origins` in FastAPI CORS → Vercel production URL
-- Spotify developer dashboard → needs production redirect URI added
-
-Everything else (Supabase, Anthropic API key, Spotify credentials) already works — they just need to be copied into the new environment's env vars.
-
-## One Thing to Know About the ML Backend
-
-The CLAP model is large (~2GB). When Render boots your service for the first time, it will download the model, which can take several minutes. This is a one-time cost per deploy. Render's **free tier** spins the service down after 15 minutes of inactivity, so the next request after a long pause will be slow (~30–60 seconds). For the portfolio demo period, you'll want the **Starter plan (~$7/month)** which keeps it always-on — worth it so it doesn't feel broken when a recruiter tries it.
+By end of this week, you should have a live Vercel URL showing the auth flow and playlist browsing, a custom domain pointing to it, and a README with a demo recording of the full split working locally.
 
 ## Branch Workflow (every day)
 
@@ -30,41 +15,17 @@ The CLAP model is large (~2GB). When Render boots your service for the first tim
 
 ---
 
-## Day 1 — Deploy FastAPI to Render (~2 hrs)
+## Day 1 — Code Prep for Deploy ✓ (done)
 
-**Branch:** `deploy/render-backend`
+**Branch:** `deploy/render-backend` (merged)
 
-1. Make sure `backend/` has a clean `requirements.txt` (or that `pyproject.toml` has all deps listed). Render needs to install your dependencies on its servers.
-   - Run `uv pip freeze > requirements.txt` inside `backend/` to generate it, or verify the existing one is complete.
+Cleaned up `backend/requirements.txt` to only include what the FastAPI service actually imports (the old file was a full Jupyter environment dump and was missing critical packages). Updated CORS in `backend/app/main.py` to read allowed origins from an `ALLOWED_ORIGINS` environment variable instead of hardcoding `127.0.0.1` — local dev still works unchanged since the default value is `http://127.0.0.1:3000`.
 
-2. In `backend/app/main.py`, update the CORS `allow_origins` to read from an environment variable so you can easily add the Vercel URL later without changing code:
-   ```python
-   import os
-   origins = os.environ.get("ALLOWED_ORIGINS", "http://127.0.0.1:3000").split(",")
-   app.add_middleware(CORSMiddleware, allow_origins=origins, ...)
-   ```
-
-3. Go to [render.com](https://render.com) and create a new **Web Service**:
-   - Connect your GitHub repo
-   - Root directory: `backend`
-   - Build command: `pip install -r requirements.txt`
-   - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - Instance type: **Starter** ($7/month) — needed for always-on so the ML model isn't unloading constantly
-
-4. Add environment variables in the Render dashboard:
-   - `DATABASE_URL` — your Supabase connection string
-   - `ANTHROPIC_API_KEY` — your Anthropic key
-   - `ALLOWED_ORIGINS` — leave blank for now (add the Vercel URL after Day 2)
-
-5. Wait for the first deploy to finish. The first boot will download the CLAP model — this can take 5–10 minutes. Watch the logs in the Render dashboard.
-
-6. Test the health endpoint: `curl https://<your-render-url>.onrender.com/health` should return `{"status":"ok"}`.
-
-7. Commit the CORS change, PR, merge, cleanup.
+Attempted Render deployment but skipped — PyTorch + scipy build failures and the $7–$25/month cost aren't worth it for a portfolio project. The GitHub repo and a demo recording serve the same purpose for recruiters.
 
 ---
 
-## Day 2 — Deploy Next.js to Vercel (~2 hrs)
+## Day 2 — Deploy Frontend to Vercel (~1 hr)
 
 **Branch:** `deploy/vercel-frontend`
 
@@ -72,57 +33,44 @@ The CLAP model is large (~2GB). When Render boots your service for the first tim
    - Connect your GitHub repo
    - Root directory: `frontend`
    - Framework: Next.js (Vercel auto-detects this)
-   - Click Deploy — it will probably fail on the first try because env vars aren't set yet. That's fine.
 
-2. In the Vercel project settings → Environment Variables, add:
-   - `AUTH_SECRET` — same value as your local `.env.local`
-   - `AUTH_SPOTIFY_ID` — your Spotify client ID
-   - `AUTH_SPOTIFY_SECRET` — your Spotify client secret
-   - `DATABASE_URL` — your Supabase connection string
-   - `FASTAPI_URL` — your Render backend URL (e.g. `https://playlist-splitter-backend.onrender.com`)
-   - `AUTH_URL` — leave this blank for now; you'll set it to the custom domain in Day 4. For testing today, set it to the Vercel-generated URL (e.g. `https://playlist-splitter-abc123.vercel.app`)
+2. Add environment variables in Vercel project settings before deploying:
+   - `AUTH_SECRET`
+   - `AUTH_SPOTIFY_ID`
+   - `AUTH_SPOTIFY_SECRET`
+   - `DATABASE_URL`
+   - `AUTH_URL` — set this after the first deploy once you have the Vercel URL (e.g. `https://playlist-splitter-abc123.vercel.app`)
 
-3. **Concept — why AUTH_URL matters in production:** In development, `AUTH_URL` tells Auth.js to use `127.0.0.1:3000` for OAuth redirect URIs. In production it serves the same purpose: it's the domain that Spotify will redirect the user back to after login. If this is wrong, the OAuth login will fail.
+3. Deploy. If the build fails, check the Vercel build logs — common issue is Prisma not generating the client. If that happens, add `"postinstall": "prisma generate"` to `frontend/package.json` scripts.
 
-4. Trigger a redeploy in Vercel. Check the build logs for errors. Common issues:
-   - Prisma not generating client → add `"postinstall": "prisma generate"` to `frontend/package.json` scripts if it's not already there.
-   - Missing env var at build time → Vercel needs vars marked as available to the build, not just runtime.
-
-5. Once the deploy succeeds, note your Vercel URL.
-
-6. In the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), go to your app → Edit Settings → Redirect URIs. Add:
+4. Add the Vercel URL as a redirect URI in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard):
    `https://<your-vercel-url>.vercel.app/api/auth/callback/spotify`
 
-7. Try to sign in on the Vercel URL. Don't worry if the split doesn't work yet — just confirm auth works.
+5. Set `AUTH_URL` in Vercel env vars to your Vercel URL, then trigger a redeploy.
 
-8. Commit any code changes, PR, merge, cleanup.
+6. Test that sign-in works on the Vercel URL.
+
+7. Commit any code changes, PR, merge, cleanup.
 
 ---
 
-## Day 3 — Wire Up and Test End-to-End in Production (~2 hrs)
+## Day 3 — Test and Fix Production (~1 hr)
 
-**Branch:** `deploy/production-wiring`
+**Branch:** `deploy/production-fixes`
 
-1. In the Render dashboard, update `ALLOWED_ORIGINS` to include your Vercel URL:
-   `https://<your-vercel-url>.vercel.app`
-   Trigger a redeploy on Render.
+1. Sign in on the Vercel URL and confirm:
+   - Auth works ✓
+   - Playlists load ✓
+   - Clicking a playlist shows tracks ✓
+   - Split button is visible (it will fail without the backend, which is expected)
 
-2. In the Vercel dashboard, confirm `FASTAPI_URL` points to the Render URL. Trigger a redeploy on Vercel if you changed anything.
+2. Fix the hardcoded sign-out URL — in `frontend/app/page.tsx`, the `signOut` calls use `callbackUrl: "http://127.0.0.1:3000"` which will send users to your local machine after signing out in production. Change it to `callbackUrl: "/"` so it redirects to the current origin instead:
+   ```typescript
+   signOut({ callbackUrl: "/" })
+   ```
+   There are two of these (one in the 401 handler, one in the sign-out button) — update both.
 
-3. Do a full end-to-end test on the production URLs:
-   - Sign in with Spotify ✓
-   - Browse playlists ✓
-   - Click a playlist and see tracks ✓
-   - Click "Split this playlist" ✓
-   - See the loading spinner ✓
-   - See results when done ✓
-
-4. If anything is broken, check:
-   - Render logs for backend errors
-   - Vercel function logs (in the Vercel dashboard → Deployments → your deploy → Functions) for frontend API errors
-   - Browser DevTools → Network tab for failed requests
-
-5. Fix anything you find, PR, merge, cleanup.
+3. Commit, PR, merge, cleanup.
 
 ---
 
@@ -132,18 +80,19 @@ The CLAP model is large (~2GB). When Render boots your service for the first tim
 
 1. If you don't have a domain yet, buy one at [Namecheap](https://www.namecheap.com) or [Porkbun](https://porkbun.com) (~$12/year for a .com).
 
-2. In the Vercel project settings → Domains, add your domain. Vercel will give you DNS records (an A record or CNAME) to add in your domain registrar.
+2. In the Vercel project settings → Domains, add your domain. Vercel will give you DNS records (an A record or CNAME) to add at your registrar.
 
-3. Add the DNS records in your registrar and wait for propagation (usually 5–30 minutes, occasionally up to an hour).
+3. Add the DNS records and wait for propagation (usually 5–30 minutes).
 
-4. Once the domain is active in Vercel, update:
-   - `AUTH_URL` in Vercel env vars → `https://yourdomainname.com`
-   - Spotify Developer Dashboard → add `https://yourdomainname.com/api/auth/callback/spotify` as a redirect URI (keep the Vercel URL too)
-   - `ALLOWED_ORIGINS` in Render → add `https://yourdomainname.com` (comma-separated with the Vercel URL)
+4. Once active, update in Vercel env vars:
+   - `AUTH_URL` → `https://yourdomainname.com`
 
-5. Test sign-in and a full split on the custom domain.
+5. Add the custom domain as a redirect URI in the Spotify Developer Dashboard:
+   `https://yourdomainname.com/api/auth/callback/spotify`
 
-6. Commit any code changes (there may be none), PR, merge, cleanup.
+6. Test sign-in on the custom domain.
+
+7. Commit any code changes (there may be none), PR, merge, cleanup.
 
 ---
 
@@ -151,44 +100,42 @@ The CLAP model is large (~2GB). When Render boots your service for the first tim
 
 **Branch:** `deploy/multi-account-testing`
 
-1. **Add test users:** Your Spotify app is in Development Mode, which limits it to 25 manually-approved users. In the Spotify Developer Dashboard → your app → User Management, add the Spotify email addresses of anyone you want to let try the app.
+1. In the Spotify Developer Dashboard → your app → User Management, add the Spotify email address of at least one other person (friend or family member) so they can log in.
 
-2. Have at least one other person (friend, family member) try the full flow:
-   - They should receive the invite email from Spotify or be on the list
-   - They sign in on your domain
-   - They split one of their playlists
-   - Results appear correctly
+2. Have them open your domain, sign in, and browse their playlists. Confirm:
+   - Auth works for their account ✓
+   - Their playlists and tracks load correctly ✓
 
-3. Watch the Render and Vercel logs while they use it to catch any errors that only appear for other accounts.
+3. Watch the Vercel function logs for any errors.
 
-4. Common issues at this stage:
-   - Their playlists have local files → tracks show as empty (expected, Spotify limitation)
-   - CORS errors → double-check `ALLOWED_ORIGINS` includes the domain they're hitting
-   - Token expiry → if their session token expired mid-split, the Spotify write-back will 401
-
-5. Fix anything you find, PR, merge, cleanup.
+4. Fix anything you find, PR, merge, cleanup.
 
 ---
 
-## Day 6 — Production Hardening + README (~2 hrs)
+## Day 6 — README + Demo Recording (~2 hrs)
 
-**Branch:** `chore/production-hardening`
+**Branch:** `chore/readme`
 
-1. **Enable Supabase RLS:** Row-Level Security on the `Job` table is currently disabled (noted when you set up Supabase). Before sharing the app publicly, enable it so users can only read their own jobs. In the Supabase dashboard → Authentication → Policies, add a policy on `Job` that checks `userId = auth.uid()`. Since your app uses Prisma with a service role key (not per-user JWTs), you may instead confirm that the connection string uses the service role — which bypasses RLS — and that no client-side direct DB access exists. The important thing is to verify no user can read another user's data.
+1. Record a short screen recording (~60–90 seconds) of the full split flow running locally:
+   - Sign in
+   - Browse playlists
+   - Click a playlist, see tracks
+   - Click "Split this playlist"
+   - Loading spinner
+   - Results screen with new playlists
+   - Open one in Spotify
 
-2. **Check for hardcoded localhost URLs:** Search the codebase for `127.0.0.1` and `localhost` to make sure nothing slipped through.
-   ```
-   grep -r "127.0.0.1\|localhost" frontend/app --include="*.ts" --include="*.tsx"
-   ```
-   The sign-out `callbackUrl` in `page.tsx` has `http://127.0.0.1:3000` — update this to read from the environment or use a relative path (`/`) so it works in production.
+   On macOS: use QuickTime → File → New Screen Recording, or use `cmd+shift+5`. Convert to GIF with any free tool (e.g. [ezgif.com](https://ezgif.com)) if you want it to play inline in the README.
 
-3. **Write a README:** Create a `README.md` at the repo root covering:
+2. Write `README.md` at the repo root covering:
    - What the app does (2–3 sentences)
-   - Tech stack (bullet list)
-   - How to run it locally (setup steps)
-   - A link to the live demo
+   - Demo GIF or video link
+   - Tech stack (bullet list — Next.js, FastAPI, PyTorch, CLAP, HDBSCAN, Supabase, Auth.js, Tailwind)
+   - Architecture diagram (the one already in CLAUDE.md works)
+   - How to run it locally (setup steps for both frontend and backend)
+   - Link to the live frontend demo
 
-4. Commit, PR, merge, cleanup.
+3. Commit, PR, merge, cleanup.
 
 ---
 
@@ -205,9 +152,7 @@ The CLAP model is large (~2GB). When Render boots your service for the first tim
 
 ## If You Get Stuck
 
-- **Render build fails** → check the build logs; often a missing dependency in `requirements.txt` or wrong Python version. Render lets you set the Python version in settings.
-- **CLAP model download times out** → Render may need more memory; upgrade to the Standard plan if the Starter isn't enough.
-- **Auth 400/redirect_uri_mismatch after deploy** → the redirect URI in Spotify's dashboard must exactly match what Auth.js sends. Check `AUTH_URL` is set correctly and the Spotify dashboard has the right callback URL.
-- **Vercel build error "Cannot find module '.prisma/client'"** → ensure `prisma generate` runs during build. Add `"postinstall": "prisma generate"` to `frontend/package.json` scripts.
-- **CORS errors in production** → open DevTools → Network, look at the preflight OPTIONS request, check `ALLOWED_ORIGINS` on Render includes the exact origin (scheme + domain + no trailing slash).
-- **Sign-out redirects to wrong URL** → update the `callbackUrl` in `signOut()` calls from the hardcoded `127.0.0.1` to `/` or your production domain.
+- **Vercel build error "Cannot find module '.prisma/client'"** → Add `"postinstall": "prisma generate"` to `frontend/package.json` scripts.
+- **Auth 400/redirect_uri_mismatch after deploy** → The redirect URI in Spotify's dashboard must exactly match what Auth.js sends. Check `AUTH_URL` is set correctly and the Spotify dashboard has the right callback URL.
+- **Sign-out redirects to 127.0.0.1** → Make sure both `signOut` calls in `page.tsx` use `callbackUrl: "/"`.
+- **Custom domain not working** → DNS propagation can take up to an hour. Check with [dnschecker.org](https://dnschecker.org) to see if it's propagated yet.
