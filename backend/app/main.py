@@ -17,9 +17,10 @@ load_dotenv()
 
 app = FastAPI()
 
+origins = os.environ.get("ALLOWED_ORIGINS", "http://127.0.0.1:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:3000"],
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
