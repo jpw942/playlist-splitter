@@ -43,7 +43,7 @@ export default function Home() {
     setPlaylistsError(false);
     fetch("/api/spotify/playlists")
       .then((res) => {
-        if (res.status === 401) { signOut({ callbackUrl: "http://127.0.0.1:3000" }); return null; }
+        if (res.status === 401) { signOut({ callbackUrl: "/" }); return null; }
         if (!res.ok) throw new Error("Failed to load playlists");
         return res.json();
       })
@@ -109,7 +109,7 @@ export default function Home() {
     setSplitJobId(null);
     fetch(`/api/spotify/playlists/${playlist.id}/tracks`)
       .then((res) => {
-        if (res.status === 401) { signOut({ callbackUrl: "http://127.0.0.1:3000" }); return null; }
+        if (res.status === 401) { signOut({ callbackUrl: "/" }); return null; }
         if (!res.ok) throw new Error("Failed to load tracks");
         return res.json();
       })
@@ -142,7 +142,7 @@ export default function Home() {
             )}
             <span className="text-sm text-gray-300">{session.user?.name}</span>
             <button
-              onClick={() => signOut({ callbackUrl: "http://127.0.0.1:3000" })}
+              onClick={() => signOut({ callbackUrl: "/" })}
               className="text-sm text-gray-500 hover:text-white transition-colors"
             >
               Sign out
