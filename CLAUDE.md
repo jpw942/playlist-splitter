@@ -114,8 +114,7 @@ I have solid CS fundamentals (3rd year CSE) but have never done ML before. When 
 
 ## Current Sprint
 
-**Status:** Week 9 complete
-**Next:** Week 10 — Edge cases, stress testing, README polish
+**Status:** Project complete
 
 ## Week 1 Retrospective
 
@@ -193,6 +192,10 @@ This week went really well without many issues at all, if any. It focused on cle
 ## Week 9 Retrospective
 
 This week was mostly straightforward, and was really just deploying the application to the internet. I decided to use Vercel to host the frontend and Render for the backend. However, after running into Python dependency build failures on Render and finding out it would cost $7–25/month to keep the backend up and running, I decided not to deploy the backend. I did still deploy the frontend though, and that went smoothly. After this I tested the deployed frontend and made sure it all worked correctly. I also wrote the README for the project.
+
+## Final Retrospective
+
+Overall, I feel like this project has taught me a lot about both the frontend and backend. I have coded some basic apps that only use the frontend, but this was an extremely helpful experience for learning how the backend works and how to incorporate AI into a project. I learned about the entire workflow — where it starts and each step of the process until the playlist is split. I wouldn't necessarily do anything differently with this project. I just wish I was able to keep it fully deployed at a cheaper price so that anyone could use it as intended. However, with the proper API keys I can run it locally and split playlists for anyone who asks.
 
 ## Update Protocol
 
