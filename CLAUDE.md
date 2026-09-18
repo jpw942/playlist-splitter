@@ -114,8 +114,8 @@ I have solid CS fundamentals (3rd year CSE) but have never done ML before. When 
 
 ## Current Sprint
 
-**Status:** Week 8 complete
-**Next:** Week 9 — Deploy everything, custom domain, multi-account testing
+**Status:** Week 9 complete
+**Next:** Week 10 — Edge cases, stress testing, README polish
 
 ## Week 1 Retrospective
 
@@ -189,6 +189,10 @@ The end-to-end test in Day 6 is where problems started. Every time I split a pla
 ## Week 8 Retrospective
 
 This week went really well without many issues at all, if any. It focused on cleaning up the UI part of the app. Day 1 was centered around creating a new API route that would let the user know when the job is finished based on the Supabase "Job" table. Day 2 was essentially just repeatedly getting the state of the job so that a loading spinner could be shown as long as the job was in progress. Next up in Day 3 I just added a results screen to the UI once the job was finished. The page looks mostly the same as before except now there are cards showing the newly created playlists with links to them in Spotify. Just in case the job fails, Day 4 adds an error message when the job status is `FAILED`. Day 5 was free reign for me to change anything that I wanted to. On this day I only ended up changing the playlist screen, because I noticed after a playlist is split and we return to the playlist screen, all of the different playlists are not updated yet (e.g. with the new playlists after the split). To prevent this I made it so that the playlist screen is reloaded, and now it shows all of the playlists, including the new ones. Finally, Day 6 went well as I was just testing the edge cases, such as too few tracks, only one genre of music, etc. So overall, a pretty easy week in terms of understanding and implementing.
+
+## Week 9 Retrospective
+
+This week was mostly straightforward, and was really just deploying the application to the internet. I decided to use Vercel to host the frontend and Render for the backend. However, after running into Python dependency build failures on Render and finding out it would cost $7–25/month to keep the backend up and running, I decided not to deploy the backend. I did still deploy the frontend though, and that went smoothly. After this I tested the deployed frontend and made sure it all worked correctly. I also wrote the README for the project.
 
 ## Update Protocol
 
